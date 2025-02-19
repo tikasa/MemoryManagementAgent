@@ -1,0 +1,9 @@
+Caruna
+Ei ole Logic App valvontaa vaan Application insights valvontaa.
+En havainnut korrelaatiota Appsien ja virheviestien välillä. 
+
+Toimivat Logic appit here, PROD ympäristö ja Enabled: 
+prod-apimobjbackup-dbus-la
+prod-heater-dbus-la
+prod-customerdataupdater-dbus-la
+prod-invoicesdataupdater-dbus-la

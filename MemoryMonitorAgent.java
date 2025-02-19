@@ -13,18 +13,14 @@ public class MemoryMonitorAgent {
     public static void premain(String agentArgs, Instrumentation inst) {
         System.out.println("Memory Monitor Agent started...");
 
-        
-
+    
         // Käynnistä uusi säie, joka valvoo muistinkäyttöä
         uusiSaie = new Thread(() -> {
 
             try {
                 //voi poistaa lopuksi
                 System.out.println("Memory monitoring thread started...");
-                // Lisää tarkistus, voi poistaa lopuksi
-                Thread.sleep(1000);
-                System.out.println("Thread is running...");
-            
+   
                  MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
                  while (true) {
                     System.out.println("Memory monitoring loop running...");
@@ -36,13 +32,13 @@ public class MemoryMonitorAgent {
                     System.out.println("Heap Memory Usage: Used = " + (usedMemory / (1024 * 1024)) + " MB, Free = " + (freeMemory / (1024 * 1024)) + " MB, Max = " + (maxMemory / (1024 * 1024)) + " MB");
 
 
-                    if (freeMemory < 200 * 1024 * 1024) { // 200 MB raja
+                    if (freeMemory < 3686 * 1024 * 1024) { // 3686 MB raja
                         System.out.println("Warning: Low memory! Free memory: " + (freeMemory / (1024 * 1024)) + " MB");
                         sendEmail("kati.sarajarvi@digia.com", "Low Memory Alert", 
                         "Warning: Free memory is low (" + (freeMemory / (1024 * 1024)) + " MB)");
                     }
 
-                    Thread.sleep(5000); // Tarkista muisti 5 sekunnin välein
+                    Thread.sleep(10*60*1000); // Tarkista muisti 10min välein
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt(); 
@@ -51,13 +47,13 @@ public class MemoryMonitorAgent {
         uusiSaie.start();
     }
     static void sendEmail(String to, String subject, String body) {
-        final String from = "katisarajarvi@gmail.com"; // Lähettäjän osoite
-        final String password = "dvmu kjae wkro czvd"; // Lähettäjän sähköpostin salasana
+        final String from = "isuite@etra.fi"; // Lähettäjän osoite
+        // final String password = ""; Lähettäjän sähköpostin salasana
 
         Properties props = new Properties();
-        props.put("mail.smtp.auth", "true");
+        props.put("mail.smtp.auth", "false");
         props.put("mail.smtp.starttls.enable", "true");
-        props.put("mail.smtp.host", "smtp.gmail.com"); // Käytä oman palveluntarjoajan SMTP-palvelinta
+        props.put("mail.smtp.host", "mcx.mpynet.fi"); // Käytä oman palveluntarjoajan SMTP-palvelinta
         props.put("mail.smtp.port", "587");
 
         Session session = Session.getInstance(props, new Authenticator() {
