@@ -2,16 +2,19 @@ import java.lang.instrument.Instrumentation;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 import java.lang.management.MemoryUsage;
+import java.util.logging.Logger;
 import java.util.Properties; 
 import javax.mail.*;
 import javax.mail.internet.*;
 
 public class MemoryMonitorAgent {
     
+    private static final Logger logger = MemoryMonitorLogger.getLogger();
     private static Thread uusiSaie;
+
     // Tämä metodi käynnistyy, kun agentti liitetään JVM:ään
     public static void premain(String agentArgs, Instrumentation inst) {
-        System.out.println("Memory Monitor Agent started...");
+        logger.info("Memory Monitor Agent started...");
 
     
         // Käynnistä uusi säie, joka valvoo muistinkäyttöä
@@ -19,32 +22,34 @@ public class MemoryMonitorAgent {
 
             try {
                 //voi poistaa lopuksi
-                System.out.println("Memory monitoring thread started...");
+                logger.info("Memory monitoring thread started...");
    
                  MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
                  while (true) {
-                    System.out.println("Memory monitoring loop running...");
+                    logger.info("Memory monitoring loop running...");
                     MemoryUsage heapMemory = memoryMXBean.getHeapMemoryUsage();
                     long maxMemory = heapMemory.getMax();
                     long usedMemory = heapMemory.getUsed();
                     long freeMemory = maxMemory - usedMemory;
 
-                    System.out.println("Heap Memory Usage: Used = " + (usedMemory / (1024 * 1024)) + " MB, Free = " + (freeMemory / (1024 * 1024)) + " MB, Max = " + (maxMemory / (1024 * 1024)) + " MB");
+                    logger.info("Heap Memory Usage: Used = " + (usedMemory / (1024 * 1024)) + " MB, Free = " + (freeMemory / (1024 * 1024)) + " MB, Max = " + (maxMemory / (1024 * 1024)) + " MB");
 
 
-                    if (freeMemory < 3686 * 1024 * 1024) { // 3686 MB raja
-                        System.out.println("Warning: Low memory! Free memory: " + (freeMemory / (1024 * 1024)) + " MB");
+                    if (freeMemory < 150 * 1024 * 1024) { // 3686 MB raja sitten lopulta
+                        logger.warning("Warning: Low memory! Free memory: " + (freeMemory / (1024 * 1024)) + " MB");
                         sendEmail("kati.sarajarvi@digia.com", "Low Memory Alert", 
                         "Warning: Free memory is low (" + (freeMemory / (1024 * 1024)) + " MB)");
                     }
 
-                    Thread.sleep(10*60*1000); // Tarkista muisti 10min välein
+                    Thread.sleep(10*1000); // 10min =10*60*1000
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt(); 
             }
         });
         uusiSaie.start();
+        // Start watchdog to monitor the memory monitor itself
+        MemoryMonitorWatchdog.startWatchdog();
     }
     static void sendEmail(String to, String subject, String body) {
         final String from = "isuite@etra.fi"; // Lähettäjän osoite
@@ -56,11 +61,7 @@ public class MemoryMonitorAgent {
         props.put("mail.smtp.host", "mcx.mpynet.fi"); // Käytä oman palveluntarjoajan SMTP-palvelinta
         props.put("mail.smtp.port", "587");
 
-        Session session = Session.getInstance(props, new Authenticator() {
-            protected PasswordAuthentication getPasswordAuthentication() {
-                return new PasswordAuthentication(from, password);
-            }
-        });
+        Session session = Session.getInstance(props);
 
         try {
             Message message = new MimeMessage(session);

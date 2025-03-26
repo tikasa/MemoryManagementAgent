@@ -1,7 +1,9 @@
 import java.lang.reflect.Field;
+import java.util.logging.Logger;
 
 public class MemoryMonitorWatchdog{
-    private static final int CHECK_INTERVAL = 10 * 60 * 1000; // 10 minutes 
+    private static final int CHECK_INTERVAL = 20 * 1000; // 10 minutes = 10*60*1000
+    private static final Logger logger = MemoryMonitorLogger.getLogger();
 
     public static void startWatchdog() {
         Thread watchdogThread = new Thread(() -> {
@@ -14,16 +16,16 @@ public class MemoryMonitorWatchdog{
                     Thread monitoringThread = (Thread) threadField.get(null);
 
                     if(monitoringThread == null || !monitoringThread.isAlive()) {
-                        System.out.println("ALERT: MemoryMonitorAgent has stopped running!");
+                        logger.warning("ALERT: MemoryMonitorAgent has stopped running!");
                         MemoryMonitorAgent.sendEmail("kati.sarajarvi@digia.com",
                             "Memory Agent Failure Alert",
                             "Warning: Memory monitoring thread is NOT running!");
                     }else{
-                        System.out.println("Memory Monitor Agent is running normally");
+                        logger.info("Memory Monitor Agent is running normally");
                     }
 
                 }catch (Exception e){
-                    System.err.println("Error in watchdog: " + e.getMessage());
+                    logger.info("Error in watchdog: " + e.getMessage());
                 }
             }
         });
